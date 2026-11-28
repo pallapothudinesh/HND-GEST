@@ -1,9 +1,8 @@
-import { Component, ComponentRef, ErrorInfo, lazy, ReactNode, Suspense, useEffect, useMemo, useRef } from 'react';
+import { Component, ComponentRef, ErrorInfo, lazy, memo, ReactNode, Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars } from '@react-three/drei';
+import { ContactShadows, OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { WORLDS } from '../data/worldsData';
-import { RobotId } from '../data/roboticsData';
 import { useTheme } from '../context/ThemeContext';
 import { ParticleMode, UniverseInteractionRef } from '../types/scene';
 import { WorldId } from '../types/worlds';
@@ -12,20 +11,20 @@ import { EnergySphere } from './EnergySphere';
 import { ParticleSystem } from './ParticleSystem';
 import { PlanetSystem } from './PlanetSystem';
 
-const ArmorLabScene = lazy(() =>
-  import('./labs/ArmorLabScene').then((m) => ({ default: m.ArmorLabScene }))
-);
 const AutomotiveLabScene = lazy(() =>
   import('./labs/AutomotiveLabScene').then((m) => ({ default: m.AutomotiveLabScene }))
 );
 const EngineLabScene = lazy(() =>
   import('./labs/EngineLabScene').then((m) => ({ default: m.EngineLabScene }))
 );
-const RoboticsLabScene = lazy(() =>
-  import('./labs/RoboticsLabScene').then((m) => ({ default: m.RoboticsLabScene }))
+const JetEngineLabScene = lazy(() =>
+  import('./labs/JetEngineLabScene').then((m) => ({ default: m.JetEngineLabScene }))
 );
-const OtherLabsScene = lazy(() =>
-  import('./labs/OtherLabsScene').then((m) => ({ default: m.OtherLabsScene }))
+const LaptopLabScene = lazy(() =>
+  import('./labs/LaptopLabScene').then((m) => ({ default: m.LaptopLabScene }))
+);
+const SatelliteLabScene = lazy(() =>
+  import('./labs/SatelliteLabScene').then((m) => ({ default: m.SatelliteLabScene }))
 );
 
 interface UniverseSceneProps {
@@ -37,8 +36,6 @@ interface UniverseSceneProps {
   selectedPartId: string | null;
   exploded: boolean;
   interiorView: boolean;
-  activeRobotId: RobotId;
-  robotAnimationEnabled: boolean;
   cameraPresetNonce?: { preset: 'front' | 'back' | 'side' | 'top'; nonce: number } | null;
   resetNonce: number;
   onSelectPlanet: (id: string | null) => void;
@@ -83,6 +80,106 @@ function FloatingGeometry() {
   );
 }
 
+function LandingBackdrop({ isLight, isMobile }: { isLight: boolean; isMobile?: boolean }) {
+  const ringsRef = useRef<THREE.Group>(null);
+  const particlesRef = useRef<THREE.Points>(null);
+  const sweepLightRef = useRef<THREE.PointLight>(null);
+
+  const particleCount = isMobile ? 160 : 320;
+  const particlePositions = useMemo(() => {
+    const arr = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      const radius = 3.2 + Math.random() * 11.5;
+      const theta = Math.random() * Math.PI * 2;
+      const y = (Math.random() - 0.35) * 8.5;
+      arr[i * 3] = Math.cos(theta) * radius;
+      arr[i * 3 + 1] = y;
+      arr[i * 3 + 2] = Math.sin(theta) * radius - 1.5;
+    }
+    return arr;
+  }, [particleCount]);
+
+  useFrame((state, delta) => {
+    const dt = Math.min(delta, 0.05);
+    const t = state.clock.elapsedTime;
+
+    if (ringsRef.current) {
+      ringsRef.current.children.forEach((ring, idx) => {
+        ring.rotation.z += dt * (0.08 + idx * 0.045) * (idx % 2 === 0 ? 1 : -1);
+        ring.rotation.x = Math.PI / 2 + Math.sin(t * 0.35 + idx * 1.1) * 0.14;
+        ring.rotation.y = Math.cos(t * 0.25 + idx) * 0.12;
+      });
+    }
+
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y += dt * 0.045;
+      particlesRef.current.position.y = Math.sin(t * 0.4) * 0.22;
+    }
+
+    if (sweepLightRef.current) {
+      const angle = t * 0.55;
+      sweepLightRef.current.position.set(
+        Math.cos(angle) * 6.5,
+        2.1 + Math.sin(t * 0.45) * 0.8,
+        Math.sin(angle) * 6.5
+      );
+      sweepLightRef.current.intensity = isLight ? 1.8 : 3.2 + Math.sin(t * 1.2) * 0.6;
+    }
+  });
+
+  const ringColorA = isLight ? '#0284c7' : '#00f0ff';
+  const ringColorB = isLight ? '#4f46e5' : '#8b5cf6';
+  const particleColor = isLight ? '#0ea5e9' : '#38bdf8';
+
+  return (
+    <group>
+      {/* Dynamic Studio Light Sweep */}
+      <pointLight
+        ref={sweepLightRef}
+        position={[5, 2.2, 4]}
+        intensity={isLight ? 1.8 : 3.2}
+        color={isLight ? '#38bdf8' : '#00f0ff'}
+        distance={22}
+      />
+
+      {/* Animated Orbital Telemetry Rings */}
+      <group ref={ringsRef} position={[isMobile ? 0 : 1.55, -0.55, -0.4]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[3.4, 0.014, 12, 96]} />
+          <meshBasicMaterial color={ringColorA} transparent opacity={isLight ? 0.28 : 0.42} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2 + 0.18, 0.12, 0]}>
+          <torusGeometry args={[4.35, 0.01, 12, 96]} />
+          <meshBasicMaterial color={ringColorB} transparent opacity={isLight ? 0.2 : 0.3} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2 - 0.15, -0.1, 0]}>
+          <torusGeometry args={[5.4, 0.008, 10, 96]} />
+          <meshBasicMaterial color={ringColorA} transparent opacity={isLight ? 0.14 : 0.2} />
+        </mesh>
+      </group>
+
+      {/* Drifting Volumetric Cosmic/Studio Particles */}
+      <points ref={particlesRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[particlePositions, 3]}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          color={particleColor}
+          size={isMobile ? 0.065 : 0.055}
+          transparent
+          opacity={isLight ? 0.45 : 0.68}
+          sizeAttenuation
+          depthWrite={false}
+          blending={isLight ? THREE.NormalBlending : THREE.AdditiveBlending}
+        />
+      </points>
+    </group>
+  );
+}
+
 function SceneRig({
   interactionRef,
   activeWorld,
@@ -92,8 +189,6 @@ function SceneRig({
   selectedPartId,
   exploded,
   interiorView,
-  activeRobotId,
-  robotAnimationEnabled,
   cameraPresetNonce,
   resetNonce,
   onSelectPlanet,
@@ -111,6 +206,15 @@ function SceneRig({
     active: false,
     targetZ: 9.2,
   });
+
+  // Normalize showcase rotation when leaving landing so hand-gesture damp never unwinds multiple turns
+  useEffect(() => {
+    if (!isLanding && worldGroupRef.current) {
+      const twoPi = Math.PI * 2;
+      const wrapped = ((worldGroupRef.current.rotation.y % twoPi) + twoPi) % twoPi;
+      worldGroupRef.current.rotation.y = wrapped > Math.PI ? wrapped - twoPi : wrapped;
+    }
+  }, [isLanding]);
 
   // Trigger a one-shot smooth camera transition when world, planet, or reset changes
   useEffect(() => {
@@ -160,18 +264,35 @@ function SceneRig({
     const inter = interactionRef.current;
 
     if (worldGroupRef.current) {
-      worldGroupRef.current.rotation.y = damp(
-        worldGroupRef.current.rotation.y,
-        inter.rotationYaw,
-        3.8,
-        dt
-      );
-      worldGroupRef.current.position.y = damp(
-        worldGroupRef.current.position.y,
-        inter.verticalOffset * 0.7,
-        3.8,
-        dt
-      );
+      if (isLanding) {
+        const t = state.clock.elapsedTime;
+        worldGroupRef.current.rotation.y += dt * 0.18;
+        worldGroupRef.current.position.y = damp(
+          worldGroupRef.current.position.y,
+          Math.sin(t * 0.75) * 0.06,
+          4.0,
+          dt
+        );
+      } else {
+        worldGroupRef.current.rotation.y = damp(
+          worldGroupRef.current.rotation.y,
+          inter.rotationYaw,
+          7.2,
+          dt
+        );
+        worldGroupRef.current.position.y = damp(
+          worldGroupRef.current.position.y,
+          inter.verticalOffset * 0.7,
+          7.2,
+          dt
+        );
+      }
+    }
+
+    if (isLanding) {
+      const t = state.clock.elapsedTime;
+      state.camera.position.x = damp(state.camera.position.x, Math.sin(t * 0.22) * 0.55, 2.8, dt);
+      state.camera.position.y = damp(state.camera.position.y, 0.45 + Math.sin(t * 0.34) * 0.16, 2.8, dt);
     }
 
     // One-shot smooth camera Z transition (never fights OrbitControls zoom/orbit!)
@@ -201,76 +322,89 @@ function SceneRig({
 
   const { resolvedTheme } = useTheme();
   const isLight = resolvedTheme === 'light';
-  const showCosmicUniverse = isLanding || activeWorld === 'universe';
-  const sceneBg = isLight ? '#f5f7fb' : '#02040a';
+  const showCosmicUniverse = !isLanding && activeWorld === 'universe';
+  const sceneBg = isLight ? '#f4f6fa' : showCosmicUniverse ? '#02040a' : '#090b10';
 
   return (
     <>
       <color attach="background" args={[sceneBg]} />
-      <fogExp2 attach="fog" args={[sceneBg, isLight ? 0.025 : 0.042]} />
+      <fogExp2 attach="fog" args={[sceneBg, isLight ? 0.018 : showCosmicUniverse ? 0.042 : 0.022]} />
 
-      {/* Cinematic Cosmic & Lab Lighting */}
-      <ambientLight intensity={isLight ? 1.1 : activeWorld === 'universe' ? 0.55 : 0.9} />
+      {/* Studio & Cosmic Lighting */}
+      <ambientLight intensity={isLight ? 1.15 : showCosmicUniverse ? 0.55 : 0.85} />
       <hemisphereLight
         args={[
-          isLight ? '#ffffff' : '#bae6fd',
+          isLight ? '#ffffff' : '#e2e8f0',
           isLight ? '#cbd5e1' : '#0f172a',
-          isLight ? 1.35 : activeWorld === 'universe' ? 0.6 : 1.25,
+          isLight ? 1.35 : showCosmicUniverse ? 0.6 : 1.15,
         ]}
       />
-      <directionalLight position={[6, 10, 8]} intensity={isLight ? 2.1 : 1.8} color="#ffffff" />
+      <directionalLight position={[6, 10, 8]} intensity={isLight ? 2.1 : 1.9} color="#ffffff" />
       <directionalLight
-        position={[-6, 4, -6]}
-        intensity={isLight ? 1.1 : 1.1}
-        color={isLight ? '#bae6fd' : '#38bdf8'}
+        position={[-6, 5, -6]}
+        intensity={isLight ? 1.1 : 1.0}
+        color={isLight ? '#e0f2fe' : '#93c5fd'}
       />
-      <pointLight
-        position={[0, 2, 3]}
-        intensity={isLight ? 1.4 : 2.6}
-        color={worldTheme?.accentColor ?? (isLight ? '#087cf0' : '#00f0ff')}
-        distance={24}
-      />
-      <pointLight
-        position={[8, 6, 6]}
-        intensity={isLight ? 0.8 : 1.6}
-        color={worldTheme?.secondaryColor ?? '#3b82f6'}
-      />
-      <pointLight position={[-8, -5, -4]} intensity={isLight ? 0.5 : 1.3} color="#8b5cf6" />
-      <pointLight position={[0, 8, -8]} intensity={isLight ? 0.4 : 1.0} color="#ec4899" />
+      {showCosmicUniverse && (
+        <>
+          <pointLight
+            position={[0, 2, 3]}
+            intensity={isLight ? 1.4 : 2.6}
+            color={worldTheme?.accentColor ?? (isLight ? '#087cf0' : '#00f0ff')}
+            distance={24}
+          />
+          <pointLight position={[-8, -5, -4]} intensity={isLight ? 0.5 : 1.3} color="#8b5cf6" />
+          <pointLight position={[0, 8, -8]} intensity={isLight ? 0.4 : 1.0} color="#ec4899" />
+        </>
+      )}
 
-      {/* Deep Space Starfield (Dark Mode) */}
-      {!isLight && (
+      {/* Deep Space Starfield only in Cosmic Universe */}
+      {!isLight && showCosmicUniverse && (
         <Stars
           radius={65}
           depth={45}
-          count={isMobile ? 1200 : activeWorld === 'universe' ? 2800 : 1100}
+          count={isMobile ? 750 : 1400}
           factor={3.6}
           saturation={0.4}
           fade
-          speed={0.5}
+          speed={0.4}
         />
       )}
 
-      {/* Futuristic Spatial Grid Horizon */}
+      {/* Grounded Studio Contact Shadows in Labs */}
+      {!showCosmicUniverse && (
+        <ContactShadows
+          position={[0, -0.81, 0]}
+          opacity={isLight ? 0.42 : 0.62}
+          scale={12}
+          blur={2.2}
+          far={4.5}
+          resolution={256}
+          frames={1}
+        />
+      )}
+
+      {/* Subtle Spatial Grid */}
       <gridHelper
         args={[
           60,
           48,
-          isLight ? '#94a3b8' : worldTheme?.gridColor ?? '#0ea5e9',
-          isLight ? '#dbeafe' : '#0a1938',
+          isLight ? '#cbd5e1' : showCosmicUniverse ? '#0ea5e9' : '#1e293b',
+          isLight ? '#e2e8f0' : '#0f172a',
         ]}
-        position={[0, -5.8, 0]}
+        position={[0, showCosmicUniverse ? -5.8 : -0.85, 0]}
       />
 
-      <FloatingGeometry />
+      {showCosmicUniverse && <FloatingGeometry />}
+      {isLanding && <LandingBackdrop isLight={isLight} isMobile={isMobile} />}
 
-      {/* Main Gesture-Responsive Universe / Lab Group */}
+      {/* Main Gesture-Responsive Studio Group */}
       <group ref={worldGroupRef}>
-        {activeWorld !== 'automotive' && (
+        {showCosmicUniverse && (
           <ParticleSystem
             mode={particleMode}
             interactionRef={interactionRef}
-            count={isMobile ? 950 : activeWorld === 'universe' ? 2400 : 1000}
+            count={isMobile ? 950 : 2200}
           />
         )}
 
@@ -281,7 +415,7 @@ function SceneRig({
               <PlanetSystem
                 selectedPlanetId={selectedPlanetId}
                 hoveredPlanetId={hoveredPlanetId}
-                onSelectPlanet={(id) => onSelectPlanet(id)}
+                onSelectPlanet={onSelectPlanet}
                 onHoverPlanet={onHoverPlanet}
                 interactionRef={interactionRef}
               />
@@ -296,21 +430,16 @@ function SceneRig({
               </mesh>
             }
           >
-            {activeWorld === 'armor' ? (
-              <ArmorLabScene
-                interactionRef={interactionRef}
-                selectedPartId={selectedPartId}
-                onSelectPart={onSelectPart}
-                exploded={exploded}
-              />
-            ) : activeWorld === 'automotive' ? (
-              <AutomotiveLabScene
-                interactionRef={interactionRef}
-                selectedPartId={selectedPartId}
-                onSelectPart={onSelectPart}
-                interiorView={interiorView}
-                exploded={exploded}
-              />
+            {activeWorld === 'automotive' ? (
+              <group position={[isLanding && !isMobile ? 1.55 : 0, 0, 0]}>
+                <AutomotiveLabScene
+                  interactionRef={interactionRef}
+                  selectedPartId={selectedPartId}
+                  onSelectPart={onSelectPart}
+                  interiorView={interiorView}
+                  exploded={exploded}
+                />
+              </group>
             ) : activeWorld === 'engineering' ? (
               <EngineLabScene
                 interactionRef={interactionRef}
@@ -318,23 +447,28 @@ function SceneRig({
                 onSelectPart={onSelectPart}
                 exploded={exploded}
               />
-            ) : activeWorld === 'robotics' ? (
-              <RoboticsLabScene
+            ) : activeWorld === 'jet_engine' ? (
+              <JetEngineLabScene
                 interactionRef={interactionRef}
-                activeRobotId={activeRobotId}
                 selectedPartId={selectedPartId}
                 onSelectPart={onSelectPart}
                 exploded={exploded}
-                animationEnabled={robotAnimationEnabled}
               />
-            ) : (
-              <OtherLabsScene
-                worldId={activeWorld}
+            ) : activeWorld === 'laptop' ? (
+              <LaptopLabScene
                 interactionRef={interactionRef}
                 selectedPartId={selectedPartId}
                 onSelectPart={onSelectPart}
+                exploded={exploded}
               />
-            )}
+            ) : activeWorld === 'satellite' ? (
+              <SatelliteLabScene
+                interactionRef={interactionRef}
+                selectedPartId={selectedPartId}
+                onSelectPart={onSelectPart}
+                exploded={exploded}
+              />
+            ) : null}
           </Suspense>
         )}
       </group>
@@ -396,19 +530,29 @@ class WebGLErrorBoundary extends Component<
   }
 }
 
-export function UniverseScene(props: UniverseSceneProps) {
+export const UniverseScene = memo(function UniverseScene(props: UniverseSceneProps) {
   return (
     <WebGLErrorBoundary>
       <div className="fixed inset-0 z-0">
         <Canvas
-          dpr={[1, 1.5]}
+          dpr={[1, 1.35]}
+          shadows={false}
           camera={{ position: [0, 0.4, 9.2], fov: 50, near: 0.1, far: 150 }}
-          gl={{ antialias: true, powerPreference: 'high-performance' }}
-          onPointerMissed={() => props.onSelectPlanet(null)}
+          gl={{
+            antialias: true,
+            powerPreference: 'high-performance',
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.08,
+          }}
+          onPointerMissed={() => {
+            if (props.activeWorld === 'universe' && props.selectedPlanetId !== null) {
+              props.onSelectPlanet(null);
+            }
+          }}
         >
           <SceneRig {...props} />
         </Canvas>
       </div>
     </WebGLErrorBoundary>
   );
-}
+});

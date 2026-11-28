@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Atom,
-  Bot,
   Car,
   Cpu,
   Orbit,
-  Palette,
-  Rocket,
-  Shield,
+  Satellite,
   Wrench,
   X,
 } from 'lucide-react';
@@ -24,21 +20,14 @@ interface WorldHubOverlayProps {
 
 function getWorldIcon(id: WorldId) {
   switch (id) {
-    case 'armor':
-      return Shield;
     case 'automotive':
       return Car;
     case 'engineering':
+    case 'jet_engine':
       return Wrench;
-    case 'robotics':
-      return Bot;
-    case 'space':
-      return Rocket;
-    case 'science':
-      return Atom;
-    case 'digital_art':
-      return Palette;
-    case 'future_tech':
+    case 'satellite':
+      return Satellite;
+    case 'laptop':
       return Cpu;
     default:
       return Orbit;
@@ -52,7 +41,7 @@ export function WorldHubOverlay({
   onClose,
 }: WorldHubOverlayProps) {
   const [focusedId, setFocusedId] = useState<WorldId>(
-    activeWorld === 'universe' ? 'armor' : activeWorld
+    activeWorld === 'universe' ? 'automotive' : activeWorld
   );
 
   const focusedWorld = WORLDS.find((w) => w.id === focusedId) ?? WORLDS[0];

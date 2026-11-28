@@ -1,13 +1,10 @@
 export type WorldId =
   | 'universe'
-  | 'armor'
   | 'automotive'
   | 'engineering'
-  | 'robotics'
-  | 'space'
-  | 'science'
-  | 'digital_art'
-  | 'future_tech';
+  | 'jet_engine'
+  | 'laptop'
+  | 'satellite';
 
 export interface WorldConfig {
   id: WorldId;

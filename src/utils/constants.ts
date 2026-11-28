@@ -91,14 +91,14 @@ export const GESTURE_GUIDE_ITEMS = [
   {
     gesture: 'OPEN_PALM',
     title: 'OPEN PALM',
-    action: 'EXPAND',
-    detail: 'Expand energy sphere, rings & particle field',
+    action: 'ORBIT & ACTIVATE',
+    detail: 'Sweep open palm to orbit & energize studio',
   },
   {
     gesture: 'CLOSED_FIST',
     title: 'CLOSED FIST',
-    action: 'CONTRACT',
-    detail: 'Compress core & pull particles inward',
+    action: 'POSE LOCK',
+    detail: 'Freeze current angle & exploded state',
   },
   {
     gesture: 'PINCH',
@@ -140,11 +140,11 @@ export const GESTURE_GUIDE_ITEMS = [
 
 export const GESTURE_LABELS: Record<string, string> = {
   NONE: 'STANDBY',
-  OPEN_PALM: 'EXPANSION',
-  CLOSED_FIST: 'COMPRESSION',
-  PINCH: 'OBJECT INTERACTION',
+  OPEN_PALM: 'INTERACTION ACTIVE',
+  CLOSED_FIST: 'POSE LOCKED',
+  PINCH: 'OBJECT GRAB',
   POINTING: 'SELECTION MODE',
-  TWO_HANDS: 'DUAL-HAND SCALE',
+  TWO_HANDS: 'EXPLODED / ZOOM',
   THUMBS_UP: 'SYSTEM RESET',
 };
 

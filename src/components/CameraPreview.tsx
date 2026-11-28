@@ -10,6 +10,7 @@ interface CameraPreviewProps {
   isModelLoading: boolean;
   modelError: string | null;
   landmarksRef: React.MutableRefObject<HandLandmark[][]>;
+  handDetected: boolean;
   isVisible: boolean;
   onToggleVisible: () => void;
   onStartCamera: () => void;
@@ -33,6 +34,7 @@ export function CameraPreview({
   isModelLoading,
   modelError,
   landmarksRef,
+  handDetected,
   isVisible,
   onToggleVisible,
   onStartCamera,
@@ -64,45 +66,82 @@ export function CameraPreview({
       return;
     }
 
-    const timer = window.setInterval(() => {
+    let rafId = 0;
+    let prevLandmarks: HandLandmark[][] | null = null;
+
+    const draw = () => {
+      rafId = requestAnimationFrame(draw);
       const landmarks = landmarksRef.current;
+      // Skip redraw if landmarks reference hasn't changed since last painted frame
+      if (landmarks === prevLandmarks) return;
+      prevLandmarks = landmarks;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (!landmarks || landmarks.length === 0) return;
 
-      landmarks.forEach((hand, hIdx) => {
-        const strokeColor = hIdx === 0 ? '#00f0ff' : '#a855f7';
-        ctx.strokeStyle = strokeColor;
+      const w = canvas.width;
+      const h = canvas.height;
+
+      for (let hIdx = 0; hIdx < landmarks.length; hIdx++) {
+        const hand = landmarks[hIdx];
+        ctx.strokeStyle = hIdx === 0 ? '#00f0ff' : '#a855f7';
         ctx.lineWidth = 1.6;
 
-        HAND_CONNECTIONS.forEach(([a, b]) => {
+        // Batch all skeleton connections into a single stroke call
+        ctx.beginPath();
+        for (let i = 0; i < HAND_CONNECTIONS.length; i++) {
+          const [a, b] = HAND_CONNECTIONS[i];
           const p1 = hand[a];
           const p2 = hand[b];
-          if (!p1 || !p2) return;
-          ctx.beginPath();
-          ctx.moveTo((1 - p1.x) * canvas.width, p1.y * canvas.height);
-          ctx.lineTo((1 - p2.x) * canvas.width, p2.y * canvas.height);
-          ctx.stroke();
-        });
+          if (!p1 || !p2) continue;
+          ctx.moveTo((1 - p1.x) * w, p1.y * h);
+          ctx.lineTo((1 - p2.x) * w, p2.y * h);
+        }
+        ctx.stroke();
 
-        hand.forEach((lm, idx) => {
-          ctx.beginPath();
-          ctx.fillStyle = idx === 4 || idx === 8 ? '#f472b6' : '#ffffff';
-          ctx.arc((1 - lm.x) * canvas.width, lm.y * canvas.height, idx === 8 ? 3.2 : 2.1, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      });
-    }, 60);
+        // Batch regular joints into one fill call, then thumb/index tips into one fill call
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        for (let idx = 0; idx < hand.length; idx++) {
+          if (idx === 4 || idx === 8) continue;
+          const lm = hand[idx];
+          const cx = (1 - lm.x) * w;
+          const cy = lm.y * h;
+          ctx.moveTo(cx + 2.1, cy);
+          ctx.arc(cx, cy, 2.1, 0, Math.PI * 2);
+        }
+        ctx.fill();
 
-    return () => window.clearInterval(timer);
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath();
+        for (const idx of [4, 8]) {
+          const lm = hand[idx];
+          if (!lm) continue;
+          const r = idx === 8 ? 3.2 : 2.1;
+          const cx = (1 - lm.x) * w;
+          const cy = lm.y * h;
+          ctx.moveTo(cx + r, cy);
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      }
+    };
+
+    rafId = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafId);
   }, [landmarksRef, isVisible, cameraStatus]);
 
   return (
-    <div className="fixed bottom-14 right-3 sm:right-5 z-30 flex flex-col items-end gap-2">
+    <div className="fixed bottom-28 sm:bottom-14 right-3 sm:right-4 z-30 flex flex-col items-end gap-2">
       {/* Always keep video element mounted so stream stays attached even when preview is hidden */}
       <div
         className={`glass-panel overflow-hidden rounded-xl transition-all duration-300 ${
+          handDetected && isVisible
+            ? 'ring-2 ring-neon-cyan/70 shadow-[0_0_20px_rgba(0,240,255,0.28)]'
+            : ''
+        } ${
           isVisible
-            ? 'w-44 sm:w-56 opacity-100 scale-100'
+            ? 'w-40 sm:w-48 opacity-100 scale-100'
             : 'pointer-events-none h-0 w-0 opacity-0 scale-95 border-0'
         }`}
       >

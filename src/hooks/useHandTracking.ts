@@ -10,7 +10,10 @@ export interface UseHandTrackingResult {
   modelError: string | null;
 }
 
-const BASE_INFERENCE_INTERVAL_MS = 60; // ~16.6 FPS cap so Three.js keeps 60fps headroom
+type VideoWithRVFC = HTMLVideoElement & {
+  requestVideoFrameCallback?: (cb: (now: number) => void) => number;
+  cancelVideoFrameCallback?: (handle: number) => void;
+};
 
 export function useHandTracking(
   videoRef: React.RefObject<HTMLVideoElement>,
@@ -20,6 +23,7 @@ export function useHandTracking(
 ): UseHandTrackingResult {
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const landmarksRef = useRef<HandLandmark[][]>([]);
+  const lastTimestampRef = useRef<number>(0);
   const onLandmarksRef = useRef(onLandmarks);
   onLandmarksRef.current = onLandmarks;
 
@@ -94,7 +98,7 @@ export function useHandTracking(
     };
   }, [enabled]);
 
-  // Run inference loop when camera is active and model is ready
+  // Run zero-latency inference synced to incoming webcam frames via requestVideoFrameCallback (with rAF fallback)
   useEffect(() => {
     if (!enabled || cameraStatus !== 'active' || !modelReady) {
       landmarksRef.current = [];
@@ -102,34 +106,28 @@ export function useHandTracking(
       return;
     }
 
+    const video = videoRef.current as VideoWithRVFC | null;
+    if (!video) return;
+
+    let cancelled = false;
     let rafId = 0;
-    let lastInferenceTime = 0;
+    let rvfcId = 0;
     let lastVideoTime = -1;
-    let dynamicInterval = BASE_INFERENCE_INTERVAL_MS;
     let isInferring = false;
 
-    const processFrame = (now: number) => {
-      rafId = requestAnimationFrame(processFrame);
-
-      if (isInferring) return;
-      const video = videoRef.current;
+    const runInference = (now: number) => {
       const landmarker = landmarkerRef.current;
-      if (!video || !landmarker || video.readyState < 2) return;
-
-      if (now - lastInferenceTime < dynamicInterval) return;
+      if (!landmarker || video.readyState < 2 || isInferring) return;
       if (video.currentTime === lastVideoTime) return;
 
-      lastInferenceTime = now;
       lastVideoTime = video.currentTime;
       isInferring = true;
 
       try {
-        const t0 = performance.now();
-        const results = landmarker.detectForVideo(video, now);
-        const elapsed = performance.now() - t0;
-        // Adaptive backoff if MediaPipe inference is heavy on this device
-        dynamicInterval = elapsed > 26 ? 90 : BASE_INFERENCE_INTERVAL_MS;
-
+        // MediaPipe detectForVideo requires strictly monotonically increasing timestamps
+        const ts = now > lastTimestampRef.current ? now : lastTimestampRef.current + 1;
+        lastTimestampRef.current = ts;
+        const results = landmarker.detectForVideo(video, ts);
         const hands: HandLandmark[][] = (results.landmarks ?? []).map((hand) =>
           hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z }))
         );
@@ -142,9 +140,36 @@ export function useHandTracking(
       }
     };
 
-    rafId = requestAnimationFrame(processFrame);
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      const onVideoFrame = (now: number) => {
+        if (cancelled) return;
+        runInference(now);
+        if (!cancelled) {
+          rvfcId = video.requestVideoFrameCallback!(onVideoFrame);
+        }
+      };
+      rvfcId = video.requestVideoFrameCallback(onVideoFrame);
+    } else {
+      const loop = (now: number) => {
+        if (cancelled) return;
+        runInference(now);
+        if (!cancelled) {
+          rafId = requestAnimationFrame(loop);
+        }
+      };
+      rafId = requestAnimationFrame(loop);
+    }
+
     return () => {
-      cancelAnimationFrame(rafId);
+      cancelled = true;
+      if (rvfcId && typeof video.cancelVideoFrameCallback === 'function') {
+        video.cancelVideoFrameCallback(rvfcId);
+        rvfcId = 0;
+      }
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
     };
   }, [enabled, cameraStatus, modelReady, videoRef]);
 

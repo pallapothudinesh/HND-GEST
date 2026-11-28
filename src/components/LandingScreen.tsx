@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Camera, Hand, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Camera, Cpu, Hand, Layers, Lock, MousePointerClick } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { HndGestLogo } from './HndGestLogo';
 import { ThemeSwitcher } from './ThemeSwitcher';
@@ -8,6 +8,29 @@ interface LandingScreenProps {
   onStartExperience: () => void;
   onStartMouseOnly: () => void;
 }
+
+const CAPABILITIES = [
+  {
+    icon: Hand,
+    title: 'Zero-Latency Vision',
+    detail: '1-Euro adaptive filtering synced to 60fps camera frames',
+  },
+  {
+    icon: Lock,
+    title: 'Closed-Fist Pose Lock',
+    detail: 'Freeze any viewing angle or separation state effortlessly',
+  },
+  {
+    icon: Layers,
+    title: '51-Part Exploded View',
+    detail: 'Spread two hands to separate components continuously',
+  },
+  {
+    icon: Cpu,
+    title: 'Multi-Lab Studio',
+    detail: 'Realistic PBR Supercar, Jet Engine, Workstation & ISS Spacecraft',
+  },
+];
 
 export function LandingScreen({
   onStartExperience,
@@ -20,124 +43,98 @@ export function LandingScreen({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.04 }}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-30 flex flex-col items-center justify-center px-4 py-12 text-center pointer-events-none"
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-30 flex items-center justify-center md:justify-start px-4 sm:px-10 md:px-16 py-12 pointer-events-none"
     >
-      {/* Top-right Theme Switcher on Welcome Screen */}
+      {/* Top-right Theme Switcher */}
       <div className="pointer-events-auto fixed right-4 top-4 z-40">
         <ThemeSwitcher />
       </div>
 
-      {/* Subtle radial vignette for text legibility over the 3D sphere */}
+      {/* Editorial gradient scrim so the 3D Supercar Studio shines on the right */}
       <div
         className={`pointer-events-none absolute inset-0 ${
           isLight
-            ? 'bg-[radial-gradient(circle_at_center,rgba(245,247,251,0.3)_0%,rgba(245,247,251,0.82)_75%)]'
-            : 'bg-[radial-gradient(circle_at_center,rgba(2,4,10,0.22)_0%,rgba(2,4,10,0.78)_75%)]'
+            ? 'bg-gradient-to-r from-[#f4f6fa]/95 via-[#f4f6fa]/70 to-transparent'
+            : 'bg-gradient-to-r from-[#090b10]/92 via-[#090b10]/65 to-transparent'
         }`}
       />
 
-      <div className="relative z-10 flex max-w-3xl flex-col items-center">
-        {/* Top pill badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-cyan-400/35 bg-cosmos-900/75 px-4 py-1.5 backdrop-blur-md"
-        >
-          <HndGestLogo size="sm" />
-          <span className="font-mono text-[11px] tracking-[0.22em] text-cyan-200 uppercase">
-            HND = HAND · GEST = GESTURE
+      {/* Modern Studio Launch Card */}
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 0.08 }}
+        className="pointer-events-auto relative z-10 w-full max-w-xl glass-panel-strong rounded-3xl p-6 sm:p-8 md:p-9"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-cosmos-950/60 px-3.5 py-1.5">
+            <HndGestLogo size="sm" />
+            <span className="font-display text-xs font-bold tracking-[0.2em] text-white">
+              HND GEST
+            </span>
+          </div>
+          <span className="font-mono text-[10px] tracking-[0.18em] text-neon-cyan uppercase">
+            SPATIAL STUDIO
           </span>
-        </motion.div>
+        </div>
 
-        {/* Main Brand Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-display text-4xl sm:text-6xl md:text-7xl font-black tracking-[0.2em] text-white neon-text-cyan leading-tight"
-        >
-          HND GEST
-        </motion.h1>
+        <h1 className="mt-6 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-[1.1]">
+          Control 3D Worlds{' '}
+          <span className="text-neon-cyan">With Your Hands.</span>
+        </h1>
 
-        {/* Tagline */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.32 }}
-          className="mt-3 max-w-xl font-display text-xs sm:text-base font-semibold tracking-[0.18em] text-cyan-200/95 uppercase"
-        >
-          CONTROL THE DIGITAL WORLD WITH YOUR HANDS.
-        </motion.p>
+        <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-300">
+          Inspect realistic PBR vehicles, aerospace propulsion, workstation hardware, and
+          orbital spacecraft using local real-time webcam hand tracking—zero uploads, zero clutter.
+        </p>
 
-        {/* Small Description */}
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.42 }}
-          className="mt-2.5 max-w-lg text-xs sm:text-sm text-slate-300/85"
-        >
-          Real-time webcam hand tracking, spatial 3D robotics, automotive &amp; cosmic exploration powered by AI vision.
-        </motion.p>
+        {/* 2x2 Capability Grid */}
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {CAPABILITIES.map((cap) => {
+            const Icon = cap.icon;
+            return (
+              <div
+                key={cap.title}
+                className="rounded-2xl border border-white/10 bg-cosmos-950/55 p-3 transition hover:border-sky-400/35"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 text-neon-cyan shrink-0" />
+                  <span className="text-xs font-semibold text-white">{cap.title}</span>
+                </div>
+                <p className="mt-1 text-[11px] leading-snug text-slate-400">
+                  {cap.detail}
+                </p>
+              </div>
+            );
+          })}
+        </div>
 
-        {/* Primary CTA */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.52 }}
-          className="pointer-events-auto mt-8 flex flex-col items-center gap-3"
-        >
+        {/* Actions */}
+        <div className="mt-7 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <button
             onClick={onStartExperience}
-            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-cyan-400/70 bg-cyan-500/15 px-8 py-4 font-display text-sm sm:text-base font-bold tracking-[0.22em] text-white shadow-[0_0_32px_rgba(0,240,255,0.3)] transition-all duration-300 hover:scale-105 hover:border-cyan-300 hover:bg-cyan-400/25 hover:shadow-[0_0_48px_rgba(0,240,255,0.5)] active:scale-95"
+            className="group inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-sky-500 px-6 py-3.5 text-sm font-semibold text-slate-950 shadow-[0_8px_28px_rgba(56,189,248,0.32)] transition-all hover:bg-sky-400 hover:scale-[1.01] active:scale-[0.99]"
           >
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan-300/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            <Hand className="h-5 w-5 text-neon-cyan transition-transform duration-300 group-hover:rotate-12" />
-            <span>START EXPERIENCE</span>
+            <Camera className="h-4 w-4" />
+            <span>Launch Camera Studio</span>
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </button>
 
           <button
             onClick={onStartMouseOnly}
-            className="font-mono text-[11px] tracking-[0.18em] text-slate-400 underline-offset-4 transition-colors hover:text-cyan-300 hover:underline"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3.5 text-xs font-medium text-slate-200 transition hover:border-sky-400/50 hover:text-white"
           >
-            OR ENTER WITHOUT CAMERA (MOUSE / TOUCH MODE)
+            <MousePointerClick className="h-4 w-4 text-neon-cyan" />
+            <span>Mouse / Touch</span>
           </button>
-        </motion.div>
+        </div>
 
-        {/* Camera & Gesture Info Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.65 }}
-          className="mt-8 grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2 text-left"
-        >
-          <div className="glass-panel rounded-xl px-4 py-3 flex items-start gap-3">
-            <Camera className="mt-0.5 h-4 w-4 shrink-0 text-neon-cyan" />
-            <div>
-              <div className="font-display text-[11px] tracking-[0.16em] text-cyan-200">
-                WEBCAM PERMISSION
-              </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-slate-300/85">
-                Camera access is requested only after you click START EXPERIENCE.
-              </p>
-            </div>
-          </div>
-
-          <div className="glass-panel rounded-xl px-4 py-3 flex items-start gap-3">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-violet-400" />
-            <div>
-              <div className="font-display text-[11px] tracking-[0.16em] text-violet-200">
-                LOCAL VISION ENGINE
-              </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-slate-300/85">
-                Hand gestures are processed 100% locally in your browser. Zero footage is stored or uploaded.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      </div>
+        <p className="mt-4 font-mono text-[10px] tracking-wider text-slate-400">
+          Camera permission is requested only after clicking Launch. 100% local in-browser MediaPipe vision.
+        </p>
+      </motion.section>
     </motion.div>
   );
 }

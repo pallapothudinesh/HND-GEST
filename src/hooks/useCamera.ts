@@ -13,11 +13,14 @@ export interface UseCameraResult {
 export function useCamera(): UseCameraResult {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const requestIdRef = useRef(0);
+  const mountedRef = useRef(true);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [status, setStatus] = useState<CameraStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const stopCamera = useCallback(() => {
+    requestIdRef.current += 1;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         track.stop();
@@ -25,11 +28,14 @@ export function useCamera(): UseCameraResult {
       streamRef.current = null;
     }
     if (videoRef.current) {
+      videoRef.current.pause();
       videoRef.current.srcObject = null;
     }
-    setStream(null);
-    setStatus('idle');
-    setErrorMessage(null);
+    if (mountedRef.current) {
+      setStream(null);
+      setStatus('idle');
+      setErrorMessage(null);
+    }
   }, []);
 
   const startCamera = useCallback(async (): Promise<boolean> => {
@@ -38,6 +44,8 @@ export function useCamera(): UseCameraResult {
       setErrorMessage('WebRTC camera API is not supported in this browser.');
       return false;
     }
+
+    const requestId = ++requestIdRef.current;
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
@@ -51,12 +59,18 @@ export function useCamera(): UseCameraResult {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          frameRate: { ideal: 30, max: 30 },
+          width: { ideal: 480 },
+          height: { ideal: 360 },
+          frameRate: { ideal: 60, min: 30 },
         },
         audio: false,
       });
+
+      // Discard stream if stopCamera() was called, a newer request started, or unmounted
+      if (requestId !== requestIdRef.current || !mountedRef.current) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        return false;
+      }
 
       streamRef.current = mediaStream;
       setStream(mediaStream);
@@ -66,9 +80,16 @@ export function useCamera(): UseCameraResult {
         await videoRef.current.play().catch(() => undefined);
       }
 
+      if (requestId !== requestIdRef.current || !mountedRef.current) {
+        return false;
+      }
+
       setStatus('active');
       return true;
     } catch (err) {
+      if (requestId !== requestIdRef.current || !mountedRef.current) {
+        return false;
+      }
       const name = err instanceof Error ? err.name : '';
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         setStatus('denied');
@@ -89,10 +110,18 @@ export function useCamera(): UseCameraResult {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
+    const videoEl = videoRef.current;
     return () => {
+      mountedRef.current = false;
+      requestIdRef.current += 1;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
+      }
+      if (videoEl) {
+        videoEl.pause();
+        videoEl.srcObject = null;
       }
     };
   }, []);

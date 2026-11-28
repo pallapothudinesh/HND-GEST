@@ -4,18 +4,16 @@ import { AboutPanel } from './components/AboutPanel';
 import { CameraPreview } from './components/CameraPreview';
 import { CreatorFooter } from './components/CreatorFooter';
 import { GestureGuide } from './components/GestureGuide';
-import { HolographicMenu } from './components/HolographicMenu';
 import { HUD } from './components/HUD';
 import { LabInspectorPanel } from './components/LabInspectorPanel';
 import { LandingScreen } from './components/LandingScreen';
 import { LoadingScreen } from './components/LoadingScreen';
 import { ParticlePanel } from './components/ParticlePanel';
 import { PlanetInfoPanel } from './components/PlanetInfoPanel';
-import { CameraPreset, RoboticsLabHUD } from './components/labs/RoboticsLabHUD';
 import { SpatialCursor } from './components/SpatialCursor';
+import { StudioDock } from './components/StudioDock';
 import { UniverseScene } from './components/UniverseScene';
 import { WorldHubOverlay } from './components/WorldHubOverlay';
-import { RobotId, ROBOTS } from './data/roboticsData';
 import { WORLDS } from './data/worldsData';
 import { useCamera } from './hooks/useCamera';
 import { useGestureRecognition } from './hooks/useGestureRecognition';
@@ -39,22 +37,21 @@ const INITIAL_INTERACTION: UniverseInteractionRef = {
 
 export default function App() {
   const [hasStarted, setHasStarted] = useState(false);
-  const [activeWorld, setActiveWorld] = useState<WorldId>('universe');
+  const [activeWorld, setActiveWorld] = useState<WorldId>('automotive');
   const [worldHubOpen, setWorldHubOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<MenuSection>('universe');
   const [particleMode, setParticleMode] = useState<ParticleMode>('COSMIC');
   const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
   const [hoveredPlanetId, setHoveredPlanetId] = useState<string | null>(null);
 
-  // Lab-specific inspection states
+  // Lab-specific inspection states (inspector starts collapsed to maximize 3D viewport)
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [exploded, setExploded] = useState(false);
   const [sliderExplosion, setSliderExplosion] = useState(0);
   const [interiorView, setInteriorView] = useState(false);
-  const [activeRobotId, setActiveRobotId] = useState<RobotId>('humanoid');
-  const [robotAnimationEnabled, setRobotAnimationEnabled] = useState(true);
-  const [cameraPresetNonce, setCameraPresetNonce] = useState<{
-    preset: CameraPreset;
+  const [cameraPresetNonce] = useState<{
+    preset: 'front' | 'back' | 'side' | 'top';
     nonce: number;
   } | null>(null);
   const [resetNonce, setResetNonce] = useState(0);
@@ -64,10 +61,10 @@ export default function App() {
   const [previewVisible, setPreviewVisible] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fps, setFps] = useState(60);
   const [isMobile, setIsMobile] = useState(false);
 
   const interactionRef = useRef<UniverseInteractionRef>({ ...INITIAL_INTERACTION });
+  const fpsRef = useRef(60);
 
   const handleResetExperience = useCallback(() => {
     neuralAudio.playTransition();
@@ -120,19 +117,14 @@ export default function App() {
     [selectedPlanetId]
   );
 
-  const activeWorldName = useMemo(() => {
-    const baseName = WORLDS.find((w) => w.id === activeWorld)?.name ?? null;
-    if (activeWorld === 'robotics' && baseName) {
-      const robotName = ROBOTS.find((r) => r.id === activeRobotId)?.name;
-      return robotName ? `${baseName} // ${robotName}` : baseName;
-    }
-    return baseName;
-  }, [activeWorld, activeRobotId]);
+  const activeWorldName = useMemo(
+    () => WORLDS.find((w) => w.id === activeWorld)?.name ?? null,
+    [activeWorld]
+  );
 
   const handleStartExperience = useCallback(async () => {
     neuralAudio.playTransition();
     setHasStarted(true);
-    setGuideVisible(window.innerWidth >= 1024);
     await startCamera();
   }, [startCamera]);
 
@@ -147,6 +139,7 @@ export default function App() {
     setActiveWorld(worldId);
     setWorldHubOpen(false);
     setSelectedPartId(null);
+    setInspectorOpen(false);
     setExploded(false);
     setSliderExplosion(0);
     setInteriorView(false);
@@ -159,6 +152,10 @@ export default function App() {
 
   const handleSelectSection = useCallback((section: MenuSection) => {
     neuralAudio.playClick();
+    if (section === 'about') {
+      setActiveSection('about');
+      return;
+    }
     setActiveWorld('universe');
     setActiveSection(section);
     if (section === 'controls') {
@@ -189,12 +186,37 @@ export default function App() {
     handleResetExperience();
   }, [resetGestures, handleResetExperience]);
 
-  const handleAnimateAssembly = useCallback(() => {
-    neuralAudio.playTransition();
-    setExploded(true);
-    window.setTimeout(() => {
-      setExploded(false);
-    }, 950);
+  const handleSetExploded = useCallback((val: boolean) => {
+    neuralAudio.playClick();
+    interactionRef.current.handExplosionActive = false;
+    interactionRef.current.explosionProgress = val ? 1 : 0;
+    setExploded(val);
+    setSliderExplosion(val ? 1 : 0);
+  }, []);
+
+  const handleExplosionSliderChange = useCallback((val: number) => {
+    interactionRef.current.handExplosionActive = false;
+    interactionRef.current.explosionProgress = val;
+    setSliderExplosion(val);
+    setExploded(val >= 0.5);
+  }, []);
+
+  const handleSelectPart = useCallback((id: string | null) => {
+    if (id) {
+      neuralAudio.playSelect();
+      setInspectorOpen(true);
+    }
+    setSelectedPartId(id);
+  }, []);
+
+  const handleToggleHud = useCallback(() => {
+    neuralAudio.playClick();
+    setHudVisible((v) => !v);
+  }, []);
+
+  const handleToggleGuide = useCallback(() => {
+    neuralAudio.playClick();
+    setGuideVisible((v) => !v);
   }, []);
 
   const handleToggleAudio = useCallback(() => {
@@ -230,12 +252,49 @@ export default function App() {
     }, 1100);
   }, []);
 
+  const handleFpsUpdate = useCallback((nextFps: number) => {
+    fpsRef.current = nextFps;
+  }, []);
+
+  // Global Studio Keyboard Shortcuts (Space = Explode, R = Reset, C = Cockpit, H = Hide UI, G = Guide)
+  useEffect(() => {
+    if (!hasStarted) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleSetExploded(!exploded);
+      } else if (e.key === 'r' || e.key === 'R') {
+        handleResetExperienceWithGestures();
+      } else if ((e.key === 'c' || e.key === 'C') && activeWorld === 'automotive') {
+        neuralAudio.playTransition();
+        setInteriorView((v) => !v);
+      } else if (e.key === 'h' || e.key === 'H') {
+        handleToggleHud();
+      } else if (e.key === 'g' || e.key === 'G') {
+        handleToggleGuide();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [
+    hasStarted,
+    exploded,
+    activeWorld,
+    handleSetExploded,
+    handleResetExperienceWithGestures,
+    handleToggleHud,
+    handleToggleGuide,
+  ]);
+
+  const currentExplosionProgress =
+    handState.detectedHands >= 2 ? handState.explosionProgress : sliderExplosion;
+
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-cosmos-950">
-      {/* Subtle HUD Scanline Overlay */}
-      <div className="hud-scanline pointer-events-none fixed inset-0 z-10 opacity-40" />
-
-      {/* Full-Screen 3D Universe & Exploration Labs */}
+      {/* Full-Screen 3D Studio & Exploration Labs */}
       <UniverseScene
         interactionRef={interactionRef}
         activeWorld={activeWorld}
@@ -245,17 +304,12 @@ export default function App() {
         selectedPartId={selectedPartId}
         exploded={exploded}
         interiorView={interiorView}
-        activeRobotId={activeRobotId}
-        robotAnimationEnabled={robotAnimationEnabled}
         cameraPresetNonce={cameraPresetNonce}
         resetNonce={resetNonce}
         onSelectPlanet={handleSelectPlanet}
         onHoverPlanet={setHoveredPlanetId}
-        onSelectPart={(id) => {
-          if (id) neuralAudio.playSelect();
-          setSelectedPartId(id);
-        }}
-        onFpsUpdate={setFps}
+        onSelectPart={handleSelectPart}
+        onFpsUpdate={handleFpsUpdate}
         isLanding={!hasStarted}
         isMobile={isMobile}
       />
@@ -270,43 +324,46 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Main Experience UI */}
+      {/* Main Studio Interface */}
       {hasStarted && (
         <>
           <HUD
             activeSection={activeSection}
             activeWorldName={activeWorldName}
-            particleMode={particleMode}
+            isWorldLabActive={activeWorld !== 'universe'}
             selectedPlanetName={selectedPlanet?.name ?? null}
             cameraStatus={cameraStatus}
             handState={handState}
-            fps={fps}
+            fpsRef={fpsRef}
             hudVisible={hudVisible}
             guideVisible={guideVisible}
             audioEnabled={audioEnabled}
             isFullscreen={isFullscreen}
-            onToggleHud={() => {
+            onSelectSection={handleSelectSection}
+            onOpenWorldHub={() => {
               neuralAudio.playClick();
-              setHudVisible((v) => !v);
+              setWorldHubOpen(true);
             }}
-            onToggleGuide={() => {
-              neuralAudio.playClick();
-              setGuideVisible((v) => !v);
-            }}
+            onToggleHud={handleToggleHud}
+            onToggleGuide={handleToggleGuide}
             onToggleAudio={handleToggleAudio}
             onToggleFullscreen={handleToggleFullscreen}
-            onResetExperience={handleResetExperienceWithGestures}
           />
 
           {hudVisible && (
-            <HolographicMenu
-              activeSection={activeSection}
-              isWorldLabActive={activeWorld !== 'universe'}
-              onSelectSection={handleSelectSection}
-              onOpenWorldHub={() => {
-                neuralAudio.playClick();
-                setWorldHubOpen(true);
+            <StudioDock
+              activeWorld={activeWorld}
+              handState={handState}
+              exploded={exploded}
+              explosionProgress={currentExplosionProgress}
+              interiorView={interiorView}
+              onSetExploded={handleSetExploded}
+              onExplosionSliderChange={handleExplosionSliderChange}
+              onToggleInterior={() => {
+                neuralAudio.playTransition();
+                setInteriorView((v) => !v);
               }}
+              onReset={handleResetExperienceWithGestures}
             />
           )}
 
@@ -342,87 +399,14 @@ export default function App() {
             </>
           )}
 
-          {/* Robotics Lab Dedicated HUD & Selector */}
-          {activeWorld === 'robotics' && (
-            <RoboticsLabHUD
-              activeRobotId={activeRobotId}
-              selectedPartId={selectedPartId}
-              exploded={exploded}
-              animationEnabled={robotAnimationEnabled}
-              onSelectRobot={(id) => {
-                neuralAudio.playSelect();
-                setActiveRobotId(id);
-                setSelectedPartId(null);
-                setExploded(false);
-              }}
-              onSelectPart={(id) => {
-                if (id) neuralAudio.playSelect();
-                setSelectedPartId(id);
-              }}
-              onSetExploded={(val) => {
-                neuralAudio.playClick();
-                interactionRef.current.handExplosionActive = false;
-                interactionRef.current.explosionProgress = val ? 1 : 0;
-                setExploded(val);
-              }}
-              onToggleAnimation={() => {
-                neuralAudio.playClick();
-                setRobotAnimationEnabled((v) => !v);
-              }}
-              onSelectCameraPreset={(preset) => {
-                neuralAudio.playClick();
-                setCameraPresetNonce((prev) => ({
-                  preset,
-                  nonce: (prev?.nonce ?? 0) + 1,
-                }));
-              }}
-              onResetModel={handleResetExperienceWithGestures}
-              onReturnToHub={() => {
-                neuralAudio.playClick();
-                setWorldHubOpen(true);
-              }}
-            />
-          )}
-
-          {/* Other Multi-World Lab Inspector */}
-          {activeWorld !== 'universe' && activeWorld !== 'robotics' && (
+          {/* Collapsible Multi-World Lab Inspector */}
+          {activeWorld !== 'universe' && hudVisible && (
             <LabInspectorPanel
               worldId={activeWorld}
               selectedPartId={selectedPartId}
-              exploded={exploded}
-              explosionProgress={
-                handState.detectedHands >= 2
-                  ? handState.explosionProgress
-                  : sliderExplosion
-              }
-              interiorView={interiorView}
-              onSelectPart={(id) => {
-                if (id) neuralAudio.playSelect();
-                setSelectedPartId(id);
-              }}
-              onSetExploded={(val) => {
-                neuralAudio.playClick();
-                interactionRef.current.handExplosionActive = false;
-                interactionRef.current.explosionProgress = val ? 1 : 0;
-                setExploded(val);
-                setSliderExplosion(val ? 1 : 0);
-              }}
-              onExplosionSliderChange={(val) => {
-                interactionRef.current.handExplosionActive = false;
-                interactionRef.current.explosionProgress = val;
-                setSliderExplosion(val);
-                setExploded(val >= 0.5);
-              }}
-              onAnimateAssembly={handleAnimateAssembly}
-              onToggleInterior={() => {
-                neuralAudio.playTransition();
-                setInteriorView((v) => !v);
-              }}
-              onResetModel={handleResetExperienceWithGestures}
-              onReturnToHub={() => {
-                neuralAudio.playClick();
-                setWorldHubOpen(true);
-              }}
+              isOpen={inspectorOpen}
+              onToggleOpen={setInspectorOpen}
+              onSelectPart={handleSelectPart}
             />
           )}
 
@@ -447,6 +431,7 @@ export default function App() {
             isModelLoading={isModelLoading}
             modelError={modelError}
             landmarksRef={landmarksRef}
+            handDetected={handState.detectedHands > 0}
             isVisible={previewVisible}
             onToggleVisible={() => {
               neuralAudio.playClick();

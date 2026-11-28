@@ -215,9 +215,10 @@ function CarGLBModel({
       };
     }, [gltf.scene]);
 
-  // Dispose cloned materials on unmount to prevent GPU/memory leaks across world switches
+  // Dispose cloned materials & reset pointer cursor on unmount
   useEffect(() => {
     return () => {
+      document.body.style.cursor = 'auto';
       meshEntries.forEach(({ mesh }) => {
         if (Array.isArray(mesh.material)) {
           mesh.material.forEach((m) => m.dispose());
@@ -258,7 +259,7 @@ function CarGLBModel({
       : inter.explosionProgress;
 
     // Unified, jitter-free smoothing of the separation factor
-    smoothedFactorRef.current = damp(smoothedFactorRef.current, rawFactor, 5.2, dt);
+    smoothedFactorRef.current = damp(smoothedFactorRef.current, rawFactor, 9.5, dt);
     const factor = smoothedFactorRef.current;
 
     if (carRootRef.current) {
@@ -269,19 +270,19 @@ function CarGLBModel({
       // Smoothly frame the wider composition inside the viewport at 100% separation
       const framingFactor = 1 - factor * 0.24;
       carRootRef.current.scale.setScalar(
-        damp(carRootRef.current.scale.x, normalizedScale * clampedScale * framingFactor, 5.2, dt)
+        damp(carRootRef.current.scale.x, normalizedScale * clampedScale * framingFactor, 9.5, dt)
       );
       carRootRef.current.position.x = damp(
         carRootRef.current.position.x,
         inter.pinchOffset.x * 0.6,
-        5,
+        10,
         dt
       );
       // Slightly lower root as body lifts high so composition stays centered vertically
       carRootRef.current.position.y = damp(
         carRootRef.current.position.y,
-        groundOffsetY - factor * 0.28,
-        5.2,
+        groundOffsetY - factor * 0.28 + inter.pinchOffset.y * 0.35,
+        9.5,
         dt
       );
     }
@@ -297,21 +298,12 @@ function CarGLBModel({
       });
     }
 
-    if (factor < 0.03) {
-      for (let i = 0; i < explodableNodes.length; i++) {
-        const entry = explodableNodes[i];
-        if (entry.isWheelRoot) {
-          entry.obj.rotation.x -= dt * 0.4;
-        }
-      }
-    }
-
     if (interiorView && carRootRef.current) {
       _camLocal.set(-0.32, 1.05, -0.15);
       _lookLocal.set(-0.12, 0.85, 1.2);
       carRootRef.current.localToWorld(_camLocal);
       carRootRef.current.localToWorld(_lookLocal);
-      state.camera.position.lerp(_camLocal, 1 - Math.exp(-4.5 * dt));
+      state.camera.position.lerp(_camLocal, 1 - Math.exp(-6.5 * dt));
       state.camera.lookAt(_lookLocal);
     }
   });
@@ -402,18 +394,14 @@ export function AutomotiveLabScene(props: AutomotiveLabSceneProps) {
         />
       </Environment>
 
-      {/* Dedicated Showroom Turntable */}
+      {/* Clean Studio Showroom Plinth */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.82, 0]}>
-        <ringGeometry args={[3.1, 3.24, 72]} />
-        <meshBasicMaterial color={isLight ? '#087cf0' : '#38bdf8'} transparent opacity={0.45} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.83, 0]}>
-        <ringGeometry args={[3.7, 3.75, 72]} />
-        <meshBasicMaterial color={isLight ? '#00b8d9' : '#6366f1'} transparent opacity={0.28} side={THREE.DoubleSide} />
+        <ringGeometry args={[3.1, 3.16, 72]} />
+        <meshBasicMaterial color={isLight ? '#cbd5e1' : '#334155'} transparent opacity={0.6} side={THREE.DoubleSide} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.84, 0]}>
         <circleGeometry args={[3.1, 72]} />
-        <meshStandardMaterial color={isLight ? '#e2e8f0' : '#060c1a'} metalness={isLight ? 0.25 : 0.5} roughness={0.28} />
+        <meshStandardMaterial color={isLight ? '#e2e8f0' : '#0f172a'} metalness={0.25} roughness={0.45} />
       </mesh>
 
       <CarModelErrorBoundary>

@@ -67,6 +67,16 @@ export function classifyHandLandmarks(hands: HandLandmark[][]): RawGestureResult
   }
 
   const primary = hands[0];
+  if (!primary || primary.length < 21) {
+    return {
+      gesture: 'NONE',
+      confidence: 0,
+      palmPosition: { x: 0, y: 0 },
+      pointerPosition: { x: 0.5, y: 0.5 },
+      pinchStrength: 0,
+      twoHandDistance: 0.4,
+    };
+  }
   const wrist = primary[0];
   const middleMcp = primary[9];
 
@@ -92,7 +102,7 @@ export function classifyHandLandmarks(hands: HandLandmark[][]): RawGestureResult
   const pinchStrength = clamp(1 - (pinchDist - 0.18) / 0.45, 0, 1);
 
   // Two-hand scaling takes priority when 2 hands are clearly visible
-  if (hands.length >= 2) {
+  if (hands.length >= 2 && hands[1] && hands[1].length >= 10) {
     const second = hands[1];
     const p1 = {
       x: (hands[0][0].x + hands[0][9].x) * 0.5,
@@ -198,16 +208,19 @@ export function classifyHandLandmarks(hands: HandLandmark[][]): RawGestureResult
 }
 
 /**
- * Hysteresis stabilizer to prevent rapid flickering between gestures.
+ * Asymmetric hysteresis stabilizer: enters a detected gesture in 1 frame for
+ * near-zero latency, while requiring 3 frames to drop back or switch to avoid flicker.
  */
 export class GestureStabilizer {
   private stableGesture: GestureType = 'NONE';
   private candidateGesture: GestureType = 'NONE';
   private candidateFrames = 0;
-  private readonly requiredFrames: number;
+  private readonly enterFrames: number;
+  private readonly exitFrames: number;
 
-  constructor(requiredFrames = 4) {
-    this.requiredFrames = requiredFrames;
+  constructor(enterFrames = 1, exitFrames = 3) {
+    this.enterFrames = enterFrames;
+    this.exitFrames = exitFrames;
   }
 
   update(nextGesture: GestureType): GestureType {
@@ -217,15 +230,24 @@ export class GestureStabilizer {
       return this.stableGesture;
     }
 
+    const threshold =
+      this.stableGesture === 'NONE' && nextGesture !== 'NONE'
+        ? this.enterFrames
+        : this.exitFrames;
+
     if (nextGesture === this.candidateGesture) {
       this.candidateFrames += 1;
-      if (this.candidateFrames >= this.requiredFrames) {
+      if (this.candidateFrames >= threshold) {
         this.stableGesture = nextGesture;
         this.candidateFrames = 0;
       }
     } else {
       this.candidateGesture = nextGesture;
       this.candidateFrames = 1;
+      if (threshold <= 1) {
+        this.stableGesture = nextGesture;
+        this.candidateFrames = 0;
+      }
     }
 
     return this.stableGesture;

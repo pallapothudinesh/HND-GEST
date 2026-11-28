@@ -2,17 +2,6 @@ import { InspectablePart, WorldConfig, WorldId } from '../types/worlds';
 
 export const WORLDS: WorldConfig[] = [
   {
-    id: 'armor',
-    name: 'ARMOR LAB',
-    shortLabel: '01 // ARMOR',
-    tagline: 'EXOSKELETON & ENERGY CORE',
-    description:
-      'Inspect an original futuristic powered exoskeleton with articulated plating, exploded assembly diagnostics, and a gesture-reactive chest energy core.',
-    accentColor: '#00f0ff',
-    secondaryColor: '#3b82f6',
-    gridColor: '#0ea5e9',
-  },
-  {
     id: 'automotive',
     name: 'AUTOMOTIVE LAB',
     shortLabel: '02 // AUTO',
@@ -35,114 +24,41 @@ export const WORLDS: WorldConfig[] = [
     gridColor: '#0284c7',
   },
   {
-    id: 'robotics',
-    name: 'ROBOTICS LAB',
-    shortLabel: '04 // ROBOTICS',
-    tagline: 'AUTONOMOUS KINEMATICS',
+    id: 'jet_engine',
+    name: 'JET ENGINE LAB',
+    shortLabel: '03B // TURBOFAN',
+    tagline: 'AEROSPACE PROPULSION',
     description:
-      'Examine next-generation cybernetic systems including a bipedal humanoid chassis, 6-axis industrial manipulator arm, and autonomous recon drone.',
-    accentColor: '#a855f7',
-    secondaryColor: '#00f0ff',
-    gridColor: '#7c3aed',
+      'High-bypass aerospace turbofan jet engine featuring 22 titanium fan blades, axial compressor stages, annular combustor, and axial exploded view.',
+    accentColor: '#38bdf8',
+    secondaryColor: '#f59e0b',
+    gridColor: '#0284c7',
   },
   {
-    id: 'space',
-    name: 'SPACE EXPLORATION',
-    shortLabel: '05 // SPACE',
-    tagline: 'ORBITAL HABITAT & PROBES',
+    id: 'laptop',
+    name: 'WORKSTATION LAB',
+    shortLabel: '03C // LAPTOP',
+    tagline: 'HARDWARE ARCHITECTURE',
     description:
-      'Navigate a deep-space orbital research station with solar arrays, modular docking rings, and deep-cosmos telemetry.',
-    accentColor: '#3b82f6',
-    secondaryColor: '#ec4899',
-    gridColor: '#1d4ed8',
+      'CNC aluminum workstation laptop with internal logic board, silicon SoC, copper vapor chamber, dual cooling fans, battery pack, and 6-layer exploded view.',
+    accentColor: '#38bdf8',
+    secondaryColor: '#818cf8',
+    gridColor: '#0284c7',
   },
   {
-    id: 'science',
-    name: 'SCIENCE LAB',
-    shortLabel: '06 // SCIENCE',
-    tagline: 'MOLECULAR & QUANTUM',
+    id: 'satellite',
+    name: 'SPACECRAFT LAB',
+    shortLabel: '05 // ISS ORBITAL',
+    tagline: 'MODULAR ORBITAL SPACE STATION',
     description:
-      'Visualize an interactive 3D DNA double-helix and quantum atomic orbital lattice reacting to spatial hand gestures.',
-    accentColor: '#10b981',
-    secondaryColor: '#00f0ff',
-    gridColor: '#059669',
-  },
-  {
-    id: 'digital_art',
-    name: 'DIGITAL ART',
-    shortLabel: '07 // ART',
-    tagline: 'KINETIC LIGHT SCULPTURE',
-    description:
-      'A generative holographic torus-knot installation that morphs, expands, and resonates with your hand movements in real time.',
-    accentColor: '#ec4899',
-    secondaryColor: '#8b5cf6',
-    gridColor: '#be185d',
-  },
-  {
-    id: 'future_tech',
-    name: 'FUTURE TECHNOLOGY',
-    shortLabel: '08 // QUANTUM',
-    tagline: 'NEURAL QUANTUM CORE',
-    description:
-      'Inspect a cryogenic quantum processor suspended inside levitating superconducting rings and photonic bus arrays.',
-    accentColor: '#00f0ff',
-    secondaryColor: '#a855f7',
-    gridColor: '#0891b2',
+      'Inspect the International Space Station architecture featuring the Integrated Truss Structure, dual-wing Photovoltaic Arrays & iROSA, HRS ammonia radiators, USOS Pressurized Labs, and Russian Orbital Segment.',
+    accentColor: '#fbbf24',
+    secondaryColor: '#38bdf8',
+    gridColor: '#d97706',
   },
 ];
 
 export const WORLD_PARTS: Record<Exclude<WorldId, 'universe'>, InspectablePart[]> = {
-  armor: [
-    {
-      id: 'helmet',
-      name: 'Helmet',
-      category: 'OPTICS & NEURAL LINK',
-      description:
-        'Panoramic polarized visor housing spatial LiDAR sensors, HUD projection optics, and neural-sync telemetry receivers.',
-    },
-    {
-      id: 'chest',
-      name: 'Chest',
-      category: 'CHASSIS ARMOR',
-      description:
-        'Multi-layered titanium-graphene composite breastplate engineered to distribute kinetic stress and shield internal power conduits.',
-    },
-    {
-      id: 'energy_core',
-      name: 'Energy core',
-      category: 'FUSION REACTOR',
-      description:
-        'Fictional magnetic-confinement plasma core delivering clean harmonic power to all exoskeleton servos. Reacts dynamically to hand gestures.',
-    },
-    {
-      id: 'shoulder',
-      name: 'Shoulder',
-      category: 'GYRO PAULDRONS',
-      description:
-        'Articulated dual-axis shoulder shrouds with micro-gimbal stabilizers for effortless upper-limb range of motion.',
-    },
-    {
-      id: 'arm',
-      name: 'Arm',
-      category: 'ACTUATOR SLEEVE',
-      description:
-        'Electro-active polymer muscle fibers paired with lightweight carbon struts for smooth precision amplification.',
-    },
-    {
-      id: 'hand',
-      name: 'Hand',
-      category: 'HAPTIC GAUNTLET',
-      description:
-        'High-dexterity articulated manipulator fingers equipped with force-feedback tactile arrays.',
-    },
-    {
-      id: 'leg',
-      name: 'Leg',
-      category: 'KINETIC STRIDER',
-      description:
-        'Shock-absorbing hydraulic leg assemblies with magnetic-lock boots for high-stability traversal.',
-    },
-  ],
   automotive: [
     {
       id: 'front',
@@ -259,98 +175,157 @@ export const WORLD_PARTS: Record<Exclude<WorldId, 'universe'>, InspectablePart[]
         'Lower sump pan, oil pump, and spin-on filter circulating pressurized lubricant to reduce friction across moving parts.',
     },
   ],
-  robotics: [
+  jet_engine: [
     {
-      id: 'humanoid',
-      name: 'Humanoid Robot',
-      category: 'BIPEDAL CHASSIS',
+      id: 'intake_nacelle',
+      name: 'Intake Nacelle',
+      category: 'AERODYNAMIC COWLING',
       description:
-        'Autonomous humanoid platform featuring balanced torso gyros, articulated limbs, and stereo vision optics.',
+        'Composite acoustic inlet cowling with a polished aluminum anti-ice leading-edge lip guiding smooth airflow into the fan.',
     },
     {
-      id: 'robot_arm',
-      name: 'Industrial Robot Arm',
-      category: '6-AXIS MANIPULATOR',
+      id: 'turbofan_blades',
+      name: 'Titanium Fan & Spinner',
+      category: 'PRIMARY BYPASS STAGE',
       description:
-        'High-precision articulated factory arm with servo-driven shoulder, elbow, and wrist joints executing smooth pick-and-place arcs.',
+        '22 wide-chord twisted titanium fan blades driven by the low-pressure shaft to generate the majority of bypass thrust.',
     },
     {
-      id: 'rover_drone',
-      name: 'Autonomous Recon Drone',
-      category: 'QUAD-VECTOR UNIT',
+      id: 'axial_compressor',
+      name: 'Axial Compressor',
+      category: 'MULTI-STAGE PRESSURE',
       description:
-        'Compact hovering scout unit with ducted plasma-ion rotors and a 360° holographic terrain scanner.',
+        'Successive rotating rotor and stator stages compressing incoming core air before combustion.',
+    },
+    {
+      id: 'core_shaft',
+      name: 'Main Drive Shaft',
+      category: 'CONCENTRIC ROTOR AXIS',
+      description:
+        'High-strength titanium alloy shaft transferring torque from the rear turbine stages forward to the fan.',
+    },
+    {
+      id: 'combustion_chamber',
+      name: 'Annular Combustor',
+      category: 'THERMAL CORE',
+      description:
+        'Inconel superalloy annular liner mixing compressed air with atomized fuel for continuous high-energy expansion.',
+    },
+    {
+      id: 'turbine_stages',
+      name: 'Turbine Stages',
+      category: 'ENERGY EXTRACTION',
+      description:
+        'High- and low-pressure nickel-superalloy turbine disks extracting rotational energy from hot exhaust gases.',
+    },
+    {
+      id: 'exhaust_nozzle',
+      name: 'Exhaust Nozzle & Plug',
+      category: 'THRUST ACCELERATOR',
+      description:
+        'Convergent titanium exhaust shroud and central acoustic plug accelerating core gas flow smoothly.',
     },
   ],
-  space: [
+  laptop: [
     {
-      id: 'habitat_ring',
-      name: 'Orbital Habitat Ring',
-      category: 'CENTRIFUGE MODULE',
+      id: 'display_lid',
+      name: 'Display Lid & 4K OLED',
+      category: 'OPTICAL ASSEMBLY',
       description:
-        'Rotating torus station module generating simulated gravity for long-duration deep-space scientific crews.',
+        'Precision-milled aluminum display enclosure housing a laminated anti-reflective 4K OLED panel and CNC torque hinge.',
+    },
+    {
+      id: 'keyboard_deck',
+      name: 'Keyboard & Trackpad',
+      category: 'UNIBODY TOP CASE',
+      description:
+        'Anodized aluminum upper deck featuring 71 low-travel scissor switches and a force-sensing haptic glass trackpad.',
+    },
+    {
+      id: 'cooling_system',
+      name: 'Vapor Chamber & Fans',
+      category: 'THERMAL MANAGEMENT',
+      description:
+        'Copper vapor-chamber heatpipe paired with dual opposing 16-blade centrifugal blower fans for whisper-quiet heat dissipation.',
+    },
+    {
+      id: 'logic_board',
+      name: 'Logic Board & SoC',
+      category: 'COMPUTE CORE',
+      description:
+        'High-density multi-layer PCB integrating the mirrored silicon SoC package, unified memory, and NVMe flash storage.',
+    },
+    {
+      id: 'battery_pack',
+      name: 'Battery Array',
+      category: 'POWER ARCHITECTURE',
+      description:
+        'Contoured multi-cell lithium-polymer battery modules engineered to maximize chassis volume efficiency.',
+    },
+    {
+      id: 'bottom_chassis',
+      name: 'Bottom Unibody',
+      category: 'STRUCTURAL ENCLOSURE',
+      description:
+        'CNC-machined aluminum lower shell with acoustic intake vents and vibration-damping elastomer feet.',
+    },
+  ],
+  satellite: [
+    {
+      id: 'truss',
+      name: 'Integrated Truss & Canadarm2',
+      category: 'BACKBONE & ROBOTICS (S6–P6)',
+      description:
+        '108-meter open-lattice aluminum truss spine (S6, S5, S3/S4, S1, S0, Z1, P1, P3/P4, P5, P6) with Solar Alpha Rotary Joints (SARJ), Mobile Servicing System (Canadarm2), and AMS-02 particle physics observatory.',
+      material: '7075-T6 Aluminum / Titanium',
     },
     {
       id: 'solar_arrays',
-      name: 'Photovoltaic Wings',
-      category: 'POWER GENERATION',
+      name: 'Photovoltaic Arrays & iROSA',
+      category: 'SOLAR POWER GENERATION',
       description:
-        'Dual-axis tracking solar sails harvesting high-efficiency orbital radiation across the station truss.',
+        'Eight massive double-blanket silicon photovoltaic solar wings cantilevered from P4/P6 and S4/S6, augmented by four pink/violet-tinted Roll-Out Solar Arrays (iROSA) and outboard P6/S6 thermal radiators.',
+      material: 'Silicon Cells / Kapton / CFRP',
     },
     {
-      id: 'command_spire',
-      name: 'Command Spire',
-      category: 'DOCKING & TELEMETRY',
+      id: 'radiators',
+      name: 'Thermal HRS Radiators',
+      category: 'AMMONIA HEAT REJECTION',
       description:
-        'Central zero-gravity docking hub and deep-space laser communication array.',
-    },
-  ],
-  science: [
-    {
-      id: 'dna_helix',
-      name: 'DNA Double Helix',
-      category: 'GENOMIC STRUCTURE',
-      description:
-        'Interactive 3D molecular model illustrating sugar-phosphate backbones and complementary base-pair rungs.',
+        'Triple-panel starboard (S1) and port (P1) Heat Rejection Subsystem radiator wings circulating anhydrous ammonia through corrugated white Z-93 ceramic panels to radiate station waste heat.',
+      material: 'Z-93 Ceramic / Aluminum Honeycomb',
     },
     {
-      id: 'quantum_atom',
-      name: 'Quantum Atomic Lattice',
-      category: 'ORBITAL SHELLS',
+      id: 'usos_modules',
+      name: 'USOS Pressurized Labs & Nodes',
+      category: 'HABITATION & SCIENCE SPINE',
       description:
-        'Multi-plane electron probability rings orbiting a high-energy nuclear cluster.',
-    },
-  ],
-  digital_art: [
-    {
-      id: 'torus_sculpture',
-      name: 'Harmonic Torus Knot',
-      category: 'GENERATIVE GEOMETRY',
-      description:
-        'Continuous mathematical knot rendered in luminous wireframe and iridescent energy nodes.',
+        'United States Orbital Segment pressurized modules including Node 1 (Unity), U.S. Lab (Destiny), Node 2 (Harmony), Node 3 (Tranquility) with 7-window Cupola, ESA Columbus, and JAXA Kibo (JEM + ELM-PS + Exposed Facility).',
+      material: '2219 Aluminum-Lithium / Whipple Shield',
     },
     {
-      id: 'orbital_halo',
-      name: 'Chromatic Halo Rings',
-      category: 'SPATIAL LIGHT',
+      id: 'russian_segment',
+      name: 'Russian Orbital Segment (ROS)',
+      category: 'PROPULSION & ATTITUDE',
       description:
-        'Counter-rotating neon rings that respond to palm expansion and contraction gestures.',
-    },
-  ],
-  future_tech: [
-    {
-      id: 'quantum_chip',
-      name: 'Cryogenic QPU Core',
-      category: 'QUANTUM PROCESSOR',
-      description:
-        'Suspended multi-tier superconducting processor cooled to near absolute zero for parallel neural computation.',
+        'Aft pressurized Russian segment comprising FGB (Zarya), Service Module (Zvezda) with dual solar wings and RCS attitude thrusters, Multipurpose Laboratory Module (Nauka), Prichal node, and MRM-1/MRM-2.',
+      material: 'AMG-6 Aluminum / Kapton MLI',
     },
     {
-      id: 'mag_rings',
-      name: 'Superconducting Rings',
-      category: 'FLUX LEVITATION',
+      id: 'docking_adapters',
+      name: 'PMA & Docking Adapters',
+      category: 'CREW & CARGO INTERFACES',
       description:
-        'Frictionless magnetic-flux containment rings stabilizing the central quantum bus.',
+        'Pressurized Mating Adapters (PMA-1, PMA-2, PMA-3) and International Docking Adapters (IDA-2, IDA-3) enabling autonomous commercial crew and cargo spacecraft berthing.',
+      material: 'Titanium / Al-Li Forgings',
+    },
+    {
+      id: 'airlock_logistics',
+      name: 'Quest Airlock, BEAM & ELC',
+      category: 'EVA & EXTERNAL LOGISTICS',
+      description:
+        'Quest Joint Airlock for EVA spacewalks, Bigelow Expandable Activity Module (BEAM), Permanent Multipurpose Module (PMM Leonardo), and ExPRESS Logistics Carriers (ELC 1–4) for orbital spares.',
+      material: 'Al-Li / Vectran / Kevlar',
     },
   ],
 };
